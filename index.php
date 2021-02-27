@@ -187,6 +187,7 @@ function init_gateway_class() {
             /*
              * Your API interaction could be built with wp_remote_post()
               */
+              // TODO use prod
              $response = wp_remote_post( 'http://localhost:3000/api/1.0/payments/create', $args );
          
          
