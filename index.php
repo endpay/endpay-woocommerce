@@ -8,6 +8,9 @@
  * Version: 1.0.0
  *
  
+ /**
+  * 
+  */
  
  /*
  * This action hook registers our PHP class as a WooCommerce payment gateway
@@ -30,12 +33,16 @@ function init_gateway_class() {
  		 * Class constructor, more about it in Step 3
  		 */
           public function __construct() {
+
+            error_log("ICON:".$plugin_dir);
  
             $this->id = 'endpay'; // payment gateway plugin ID
-            $this->icon = ''; // URL of the icon that will be displayed on checkout page near your gateway name
+            $this->icon = apply_filters( 'woocommerce_gateway_icon', plugins_url( 'assets/webpay.png', __FILE__ ) ); // URL of the icon that will be displayed on checkout page near your gateway name
             $this->has_fields = true; // in case you need a custom credit card form
             $this->method_title = 'Endpay Gateway';
             $this->method_description = 'Payment Solutions'; // will be displayed on the options page
+            $this->isProd = false;
+            $this->host = $this->isProd ? 'https://api.endpay.cl/1.0' : 'http://localhost:3000/api/1.0';
          
             // gateways can support subscriptions, refunds, saved payment methods,
             // but in this tutorial we begin with simple payments
@@ -47,8 +54,8 @@ function init_gateway_class() {
             $this->init_form_fields();
          
             // Load the settings.
+            $this->title = $this->get_option( 'title', 'Webpay' );
             $this->init_settings();
-            $this->title = $this->get_option( 'title' );
             $this->description = $this->get_option( 'description' );
             $this->instructions  = $this->get_option( 'instructions' );
             $this->enabled = $this->get_option( 'enabled' );
@@ -80,12 +87,14 @@ function init_gateway_class() {
                     'description' => '',
                     'default'     => 'no'
                 ),
+                /*
                 'title' => array(
                     'title'       => 'Title',
                     'type'        => 'text',
-                    'description' => 'This controls the title which the user sees during checkout.',
-                    'default'     => 'Credit Card',
-                    'desc_tip'    => true,
+                    'description' => '',
+                    'default'     => 'Webpay',
+                    'desc_tip'    => false,
+                    'hidden' => false
                 ),
                 'description' => array(
                     'title'       => 'Description',
@@ -116,12 +125,13 @@ function init_gateway_class() {
                     'title'       => 'Test API Key',
                     'type'        => 'password',
                 ),
+                */
                 'commerce_id' => array(
-                    'title'       => 'Live Commerce ID',
+                    'title'       => 'Código de comercio',
                     'type'        => 'text'
                 ),
                 'api_key' => array(
-                    'title'       => 'Live API Key',
+                    'title'       => 'API Key',
                     'type'        => 'password'
                 )
             );
@@ -160,7 +170,9 @@ function init_gateway_class() {
 		public function process_payment( $order_id ) {
  
             global $woocommerce;
-            
+            global $wp;
+            $current_url = home_url( add_query_arg( array(), $wp->request ) );
+
             // we need it to get any order detailes
             $order = wc_get_order( $order_id );
          
@@ -172,9 +184,9 @@ function init_gateway_class() {
             $data = array(
                 'subject' => 'Pago woocommerce',
                 'amount' => $amount,
-                'return_url' => 'http://localhost:8000/?page_id=8',
-                'cancel_url' => 'http://localhost:8000/?page_id=8',
-                'notify_url' => 'http://localhost:8000/?page_id=8'
+                'return_url' => $current_url,
+                'cancel_url' => $current_url,
+                'notify_url' => $current_url
             );
             $args = array(        
                 'headers' => array(
@@ -188,7 +200,7 @@ function init_gateway_class() {
              * Your API interaction could be built with wp_remote_post()
               */
               // TODO use prod
-             $response = wp_remote_post( 'http://localhost:3000/api/1.0/payments/create', $args );
+             $response = wp_remote_post( $this->host . '/payments/create', $args );
          
          
             if( is_wp_error( $response ) ) {
