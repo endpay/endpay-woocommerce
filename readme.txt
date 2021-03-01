@@ -1,5 +1,5 @@
 === endpay ===
-Contributors: [siturra]
+Contributors: siturra
 Donate link: https://endpay.cl
 Tags: endpay, pagos, webpay, chile
 Requires at least: 5.1
