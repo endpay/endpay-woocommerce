@@ -1,4 +1,4 @@
-=== Plugin Name ===
+=== endpay ===
 Contributors: siturra
 Donate link: https://endpay.cl/
 Tags: endpay, pagos, webpay, chile
