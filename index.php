@@ -1,16 +1,16 @@
 <?php
-/*
+/**
+ * @package endpay
+ */
+ /*
  * Plugin Name: WooCommerce EndPay Gateway
  * Plugin URI: https://endpay.cl
  * Description: Payment solutions.
  * Author: EndPay
  * Author URI: http://endpay.cl
  * Version: 1.0.0
- *
- 
- /**
-  * 
-  */
+ * License: BSD-3 
+ * Text Domain: endpay
  
  /*
  * This action hook registers our PHP class as a WooCommerce payment gateway
@@ -22,7 +22,7 @@ function add_gateway_class( $gateways ) {
 }
 
 /**
- * 
+ * Reemplaza el ícono
  */
 function endpay_replace_icon( $icon_html, $id ) {
     if($id === 'endpay'){
