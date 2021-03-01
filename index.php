@@ -79,7 +79,12 @@ function init_gateway_class() {
             add_action( 'wp_enqueue_scripts', array( $this, 'payment_scripts' ) );
          
             // You can also register a webhook here
-            // add_action( 'woocommerce_api_{webhook name}', array( $this, 'webhook' ) );
+            add_action( 'woocommerce_api_webhook_status_'.$this->id, array( $this, 'webhook' ) );
+
+            if (!$this->is_valid_for_use()) {
+                $this->enabled = false;
+            }
+
          }
         
  
@@ -137,11 +142,15 @@ function init_gateway_class() {
                 */
                 'commerce_id' => array(
                     'title'       => 'Código de comercio',
-                    'type'        => 'text'
+                    'type'        => 'text',
+                    'description' => 'Indica tu código de comercio para el ambiente de producción. Este se te entregará al registrarte en https://endpay.cl',
+                    'placeholder' => 'Ej: 11234'
                 ),
                 'api_key' => array(
                     'title'       => 'API Key',
-                    'type'        => 'password'
+                    'type'        => 'text',
+                    'description' => 'Esta llave privada te la entregará EndPay en la configuración de tu cuenta.',
+                    'placeholder' => 'Ej: XXXXXXX-XXXXXXX-XXXXXXX-XXXXXXX'
                 )
             );
         }
@@ -185,7 +194,7 @@ function init_gateway_class() {
             // we need it to get any order detailes
             $order = wc_get_order( $order_id );
          
-            $amount = $order->get_total();
+            $amount = (int) number_format($order->get_total(), 0, ',', '');
 
             /*
               * Array with parameters for API interaction
@@ -247,14 +256,33 @@ function init_gateway_class() {
          
         }
         
+        /**
+         * Comprueba configuración de moneda (Peso Chileno).
+         **/
+        public static function is_valid_for_use()
+        {
+            return in_array(get_woocommerce_currency(), ['CLP']);
+        }
  
 		/*
-		 * In case you need a webhook, like PayPal IPN etc
+		 * In case you need a webhook
 		 */
 		public function webhook() {
- 
-		
- 
+            $order = wc_get_order( $_GET['id'] );
+            $order->payment_complete();
+            $order->reduce_order_stock();
+         
+            update_option('webhook_debug', $_GET);
+
+            @ob_clean();
+            if (isset($_POST)) {
+                header('HTTP/1.1 200 OK');
+
+                return (new ResponseController($this->config))->response($_POST);
+            } else {
+                echo 'Ocurrió un error al procesar su compra';
+            }
+
 	 	}
  	}
 }
