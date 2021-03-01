@@ -20,7 +20,18 @@ function add_gateway_class( $gateways ) {
 	$gateways[] = 'WC_EndPay_Gateway'; // your class name is here
 	return $gateways;
 }
- 
+
+/**
+ * 
+ */
+function endpay_replace_icon( $icon_html, $id ) {
+    if($id === 'endpay'){
+        return '<img src="' . plugins_url( 'assets/webpay.png', __FILE__ ) . '" width="200" >'; 
+    }
+    return $icon_html;
+}
+add_filter( 'woocommerce_gateway_icon', 'endpay_replace_icon', 10, 2 );
+
 /*
  * The class itself, please note that it is inside plugins_loaded action hook
  */
@@ -33,11 +44,9 @@ function init_gateway_class() {
  		 * Class constructor, more about it in Step 3
  		 */
           public function __construct() {
-
-            error_log("ICON:".$plugin_dir);
- 
+            
             $this->id = 'endpay'; // payment gateway plugin ID
-            $this->icon = apply_filters( 'woocommerce_gateway_icon', plugins_url( 'assets/webpay.png', __FILE__ ) ); // URL of the icon that will be displayed on checkout page near your gateway name
+            $this->icon = apply_filters( 'woocommerce_gateway_icon', 'endpay_replace_icon', 10, 2); // URL of the icon that will be displayed on checkout page near your gateway name
             $this->has_fields = true; // in case you need a custom credit card form
             $this->method_title = 'Endpay Gateway';
             $this->method_description = 'Payment Solutions'; // will be displayed on the options page
