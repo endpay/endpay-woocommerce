@@ -11,10 +11,16 @@ License URI: https://github.com/endpay/endpay-woocommerce/blob/main/LICENSE
  
 Recibe pagos en Chile mediante endpay
 
-== Frequently Asked Questions == 
-
 == Description ==
+Permite el uso de endpay en WooCommerce, endpay opera sobre transbank y permite recibir pagos mediante tarjetas de crédito & débito mediante webpay en Chile. 
 
-== Upgrade Notice == 
+== Installation ==
+Para instalar este plugin de forma manual debes seguir los siguientes pasos:
 
-== Screenshots ==
+1. Descomprime el plugin a la carpeta `/wp-content/plugins/`
+2. Activa el plugin en el menú 'Plugins' en Wordpress
+3. Configura el nuevo medio de pago en  WooCommerce -> Settings -> Payment Gateways
+
+== Changelog == 
+= 1.0.0 = 
+* Versión inicial estable.
