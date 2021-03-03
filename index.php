@@ -3,7 +3,7 @@
  * @package endpay
  */
  /*
- * Plugin Name: WooCommerce EndPay Gateway
+ * Plugin Name: EndPay
  * Plugin URI: https://endpay.cl
  * Description: Payment solutions.
  * Author: EndPay
@@ -50,8 +50,8 @@ function init_gateway_class() {
             $this->has_fields = true; // in case you need a custom credit card form
             $this->method_title = 'Endpay Gateway';
             $this->method_description = 'Payment Solutions'; // will be displayed on the options page
-            $this->isProd = false;
-            $this->host = $this->isProd ? 'https://api.endpay.cl/1.0' : 'http://localhost:3000/api/1.0';
+            $this->isProd = true;
+            $this->host = $this->isProd ? 'https://api.miu.cl/api/1.0' : 'http://localhost:3000/api/1.0';
          
             // gateways can support subscriptions, refunds, saved payment methods,
             // but in this tutorial we begin with simple payments
