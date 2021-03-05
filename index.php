@@ -51,7 +51,7 @@ function init_gateway_class() {
             $this->method_title = 'Endpay Gateway';
             $this->method_description = 'Payment Solutions'; // will be displayed on the options page
             $this->isProd = true;
-            $this->host = $this->isProd ? 'https://api.miu.cl/api/1.0' : 'http://localhost:3000/api/1.0';
+            $this->host = $this->isProd ? 'https://api.endpay.cl/1.0' : 'http://localhost:3000/api/1.0';
          
             // gateways can support subscriptions, refunds, saved payment methods,
             // but in this tutorial we begin with simple payments
