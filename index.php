@@ -8,7 +8,7 @@
  * Description: Payment solutions.
  * Author: EndPay
  * Author URI: http://endpay.cl
- * Version: 1.0.0
+ * Version: 1.0.1
  * License: BSD-3 
  * Text Domain: endpay
  
@@ -50,7 +50,7 @@ function init_gateway_class() {
             $this->has_fields = true; // in case you need a custom credit card form
             $this->method_title = 'Endpay Gateway';
             $this->method_description = 'Payment Solutions'; // will be displayed on the options page
-            $this->isProd = true;
+            $this->isProd = false;
             $this->host = $this->isProd ? 'https://api.endpay.cl/1.0' : 'http://localhost:3000/api/1.0';
          
             // gateways can support subscriptions, refunds, saved payment methods,
@@ -79,7 +79,7 @@ function init_gateway_class() {
             add_action( 'wp_enqueue_scripts', array( $this, 'payment_scripts' ) );
          
             // You can also register a webhook here
-            add_action( 'woocommerce_api_webhook_status_'.$this->id, array( $this, 'webhook' ) );
+            add_action( 'woocommerce_api_wc_gateway_' . $this->id, array( $this, 'webhook' ) );
 
             if (!$this->is_valid_for_use()) {
                 $this->enabled = false;
@@ -143,7 +143,7 @@ function init_gateway_class() {
                 'commerce_id' => array(
                     'title'       => 'Código de comercio',
                     'type'        => 'text',
-                    'description' => 'Indica tu código de comercio para el ambiente de producción. Este se te entregará al registrarte en https://endpay.cl',
+                    'description' => 'Indica tu código de comercio para el ambiente de producción. Este se te entregará al registrarte en <a href="https://endpay.cl" target="_blank">https://endpay.cl</a>',
                     'placeholder' => 'Ej: 11234'
                 ),
                 'api_key' => array(
@@ -196,15 +196,18 @@ function init_gateway_class() {
          
             $amount = (int) number_format($order->get_total(), 0, ',', '');
 
+            $notify_url = add_query_arg('wc-api', 'wc_gateway_' . $this->id, home_url('/'));
+
             /*
               * Array with parameters for API interaction
              */
             $data = array(
                 'subject' => 'Pago woocommerce',
                 'amount' => $amount,
+                'transaction_id' => $order_id,
                 'return_url' => $current_url,
                 'cancel_url' => $current_url,
-                'notify_url' => $current_url
+                'notify_url' => $notify_url
             );
             $args = array(        
                 'headers' => array(
@@ -224,23 +227,14 @@ function init_gateway_class() {
             if( is_wp_error( $response ) ) {
                 wc_add_notice(  'Connection error.', 'error' );
                 return;
-            }
+            } 
 
             $body = json_decode( $response['body'], true );
-    
-            // it could be different depending on your payment processor
-             // if ( $body['response']['responseCode'] == 'APPROVED' ) {
-    
-            // we received the payment
-            // $order->payment_complete();
-            // $order->reduce_order_stock();
-    
-            // some notes to customer (replace true with false to make it private)
-            // $order->add_order_note( 'Hey, your order is paid! Thank you!', true );
-    
-            // Empty cart
-            // $woocommerce->cart->empty_cart();
-    
+            
+            if(isset($body['error'])){
+                return wc_add_notice(  'Error.', 'error' );
+            }
+                 
             // Redirect to the thank you page
             error_log( print_r($body, TRUE) );
             return array(
@@ -268,21 +262,54 @@ function init_gateway_class() {
 		 * In case you need a webhook
 		 */
 		public function webhook() {
-            $order = wc_get_order( $_GET['id'] );
-            $order->payment_complete();
-            $order->reduce_order_stock();
+            global $woocommerce;
+
+            $paymentId = $_POST['id'];
+
+            $args = array(        
+                'headers' => array(
+                    'X-Commerce-Id' => $this->commerceId,
+                    'X-Api-Key' => $this->apiKey
+                )
+            );
+
+            /*
+             * Get data Payment with wp_remote_get()
+              */
+            $response = wp_remote_get( $this->host . '/payments/read/' . $paymentId, $args );
          
-            update_option('webhook_debug', $_GET);
-
-            @ob_clean();
-            if (isset($_POST)) {
-                header('HTTP/1.1 200 OK');
-
-                return (new ResponseController($this->config))->response($_POST);
-            } else {
-                echo 'Ocurrió un error al procesar su compra';
+            if( is_wp_error( $response ) ) {
+                wc_add_notice(  'Connection error.', 'error' );
+                return;
             }
 
+            $body = json_decode( $response['body'], true );
+            error_log(print_r($body, TRUE));
+
+            if(isset($body['error'])){
+                error_log(print_r($body, TRUE));
+                return wp_send_json($body);
+            }
+
+            if($body['status'] != 'done'){
+                return;
+            }
+
+            $order_id = $body['transaction_id'];
+
+            $order = wc_get_order( $order_id );
+
+            // we received the payment
+            $order->payment_complete($body['id']);
+            $order->reduce_order_stock();
+    
+            // some notes to customer (replace true with false to make it private)
+            $order->add_order_note(sprintf('Pago verificado con código único de verificación endpay #%s', $body['id']));
+            
+            // Empty cart
+            $woocommerce->cart->empty_cart();
+
+            return wp_send_json(true);
 	 	}
  	}
 }
